@@ -1,5 +1,5 @@
-// Konfigurasi WhatsApp - Ganti nomor ini dengan nomor bisnis Anda
-const WHATSAPP_NUMBER = "6289531741090"; // Ganti dengan nomor WhatsApp bisnis Anda
+// Konfigurasi WhatsApp
+const WHATSAPP_NUMBER = "6289531741090";
 
 // Data games
 const games = [
@@ -175,33 +175,44 @@ const faqs = [
     }
 ];
 
-// Variabel untuk tracking validasi
-let isWhatsAppValid = false;
-let isNamaValid = false;
+// Variabel untuk tracking validasi form
+let formValidation = {
+    nama: false,
+    whatsapp: false,
+    game: false
+};
 
-// Fungsi untuk scroll ke section tertentu
+// Navbar functionality
+let lastScrollTop = 0;
+const navbar = document.getElementById('navbar');
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+const backToTop = document.getElementById('back-to-top');
+
+// Fungsi utility
 function scrollToSection(sectionId) {
     const element = document.getElementById(sectionId);
     if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
+        // Close mobile menu if open
+        if (mobileMenu.classList.contains('show')) {
+            toggleMobileMenu();
+        }
     }
 }
 
-// Fungsi untuk buka WhatsApp umum
-function orderNow() {
-    const message = "Halo! Saya tertarik dengan layanan joki game. Mohon info paket dan harganya. Terima kasih! 🎮";
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-}
-
-// Fungsi untuk buka WhatsApp langsung
 function openWhatsApp() {
     const message = "Halo, saya tertarik dengan layanan joki game. Mohon info lengkapnya.";
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
 }
 
-// Fungsi untuk pesan game tertentu
+function orderNow() {
+    const message = "Halo! Saya tertarik dengan layanan joki game. Mohon info paket dan harganya. Terima kasih! 🎮";
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+}
+
 function orderGame(gameTitle, startingPrice) {
     const message = `🎮 *PEMESANAN JOKI GAME* 🎮
 
@@ -220,7 +231,6 @@ Terima kasih! 🙏`;
     window.open(whatsappUrl, '_blank');
 }
 
-// Fungsi untuk pesan paket tertentu
 function orderPackage(packageData) {
     const featuresText = packageData.features.map(feature => `✅ ${feature}`).join('\n');
     
@@ -245,35 +255,225 @@ Terima kasih! 🙏`;
     window.open(whatsappUrl, '_blank');
 }
 
-// Fungsi validasi nama
+// Mobile menu toggle
+function toggleMobileMenu() {
+    mobileMenu.classList.toggle('show');
+    mobileMenuBtn.classList.toggle('active');
+}
+
+// Navbar scroll behavior
+function handleNavbarScroll() {
+    const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    if (currentScrollTop > 100) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+    
+    lastScrollTop = currentScrollTop <= 0 ? 0 : currentScrollTop;
+}
+
+// Back to top functionality
+function handleBackToTop() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    if (scrollTop > 300) {
+        backToTop.classList.add('visible');
+    } else {
+        backToTop.classList.remove('visible');
+    }
+}
+
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+// Active section highlighting
+function updateActiveSection() {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+    
+    let current = 'home';
+    
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop - 100;
+        const sectionHeight = section.offsetHeight;
+        
+        if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
+            current = section.getAttribute('id');
+        }
+    });
+    
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('data-section') === current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+// Fungsi validasi
 function validateNama(nama) {
     const hasNumbers = /\d/.test(nama);
     const isLongEnough = nama.trim().length >= 2;
+    const isNotEmpty = nama.trim().length > 0;
     
-    isNamaValid = !hasNumbers && isLongEnough && nama.trim().length > 0;
-    return isNamaValid;
-}
-
-// Fungsi validasi WhatsApp
-function validateWhatsApp(whatsapp) {
-    const cleanNumber = whatsapp.replace(/\D/g, '');
+    const namaError = document.getElementById('nama-error');
+    const namaInput = document.getElementById('nama');
+    const statusNama = document.getElementById('status-nama');
     
-    if (cleanNumber.length < 12) {
-        isWhatsAppValid = false;
-        return false;
+    if (!isNotEmpty) {
+        showError('nama-error', 'Nama lengkap harus diisi');
+        namaInput.classList.add('error');
+        namaInput.classList.remove('success');
+        formValidation.nama = false;
+        statusNama.classList.remove('valid');
+    } else if (hasNumbers) {
+        showError('nama-error', 'Nama tidak boleh mengandung angka');
+        namaInput.classList.add('error');
+        namaInput.classList.remove('success');
+        formValidation.nama = false;
+        statusNama.classList.remove('valid');
+    } else if (!isLongEnough) {
+        showError('nama-error', 'Nama terlalu pendek (minimal 2 karakter)');
+        namaInput.classList.add('error');
+        namaInput.classList.remove('success');
+        formValidation.nama = false;
+        statusNama.classList.remove('valid');
+    } else {
+        hideError('nama-error');
+        namaInput.classList.remove('error');
+        namaInput.classList.add('success');
+        formValidation.nama = true;
+        statusNama.classList.add('valid');
     }
     
-    const isValidFormat = 
-        /^08\d{10,11}$/.test(cleanNumber) ||
-        /^628\d{9,12}$/.test(cleanNumber);
-    
-    const isValidLength = cleanNumber.length >= 12 && cleanNumber.length <= 15;
-    
-    isWhatsAppValid = isValidFormat && isValidLength;
-    return isWhatsAppValid;
+    updateSubmitButton();
+    return formValidation.nama;
 }
 
-// Fungsi untuk submit form contact
+function validateWhatsApp(whatsapp) {
+    const cleanNumber = whatsapp.replace(/\D/g, '');
+    const whatsappError = document.getElementById('whatsapp-error');
+    const whatsappSuccess = document.getElementById('whatsapp-success');
+    const whatsappInput = document.getElementById('whatsapp');
+    const whatsappIcon = document.getElementById('whatsapp-icon');
+    const statusWhatsapp = document.getElementById('status-whatsapp');
+    
+    if (!whatsapp.trim()) {
+        showError('whatsapp-error', 'Nomor WhatsApp harus diisi');
+        hideSuccess('whatsapp-success');
+        whatsappInput.classList.add('error');
+        whatsappInput.classList.remove('success');
+        whatsappIcon.classList.add('hidden');
+        formValidation.whatsapp = false;
+        statusWhatsapp.classList.remove('valid');
+    } else if (cleanNumber.length < 12) {
+        showError('whatsapp-error', `Nomor terlalu pendek. Minimal 12 digit (saat ini ${cleanNumber.length} digit)`);
+        hideSuccess('whatsapp-success');
+        whatsappInput.classList.add('error');
+        whatsappInput.classList.remove('success');
+        whatsappIcon.classList.add('hidden');
+        formValidation.whatsapp = false;
+        statusWhatsapp.classList.remove('valid');
+    } else {
+        const isValidFormat = 
+            /^08\d{10,11}$/.test(cleanNumber) ||
+            /^628\d{9,12}$/.test(cleanNumber);
+        
+        const isValidLength = cleanNumber.length >= 12 && cleanNumber.length <= 15;
+        
+        if (isValidFormat && isValidLength) {
+            hideError('whatsapp-error');
+            showSuccess('whatsapp-success');
+            whatsappInput.classList.remove('error');
+            whatsappInput.classList.add('success');
+            whatsappIcon.classList.remove('hidden');
+            formValidation.whatsapp = true;
+            statusWhatsapp.classList.add('valid');
+        } else {
+            showError('whatsapp-error', 'Format nomor tidak valid. Gunakan format: 08xxxxxxxxxx atau 628xxxxxxxxxx');
+            hideSuccess('whatsapp-success');
+            whatsappInput.classList.add('error');
+            whatsappInput.classList.remove('success');
+            whatsappIcon.classList.add('hidden');
+            formValidation.whatsapp = false;
+            statusWhatsapp.classList.remove('valid');
+        }
+    }
+    
+    updateSubmitButton();
+    return formValidation.whatsapp;
+}
+
+function validateGame(game) {
+    const gameError = document.getElementById('game-error');
+    const gameInput = document.getElementById('game');
+    const statusGame = document.getElementById('status-game');
+    
+    if (!game) {
+        showError('game-error', 'Pilih game terlebih dahulu');
+        gameInput.classList.add('error');
+        gameInput.classList.remove('success');
+        formValidation.game = false;
+        statusGame.classList.remove('valid');
+    } else {
+        hideError('game-error');
+        gameInput.classList.remove('error');
+        gameInput.classList.add('success');
+        formValidation.game = true;
+        statusGame.classList.add('valid');
+    }
+    
+    updateSubmitButton();
+    return formValidation.game;
+}
+
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    const span = element.querySelector('span');
+    span.textContent = message;
+    element.classList.remove('hidden');
+}
+
+function hideError(elementId) {
+    const element = document.getElementById(elementId);
+    element.classList.add('hidden');
+}
+
+function showSuccess(elementId) {
+    const element = document.getElementById(elementId);
+    element.classList.remove('hidden');
+}
+
+function hideSuccess(elementId) {
+    const element = document.getElementById(elementId);
+    element.classList.add('hidden');
+}
+
+function updateSubmitButton() {
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    
+    const isFormValid = formValidation.nama && formValidation.whatsapp && formValidation.game;
+    
+    if (isFormValid) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        submitBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        submitText.textContent = 'Kirim ke WhatsApp';
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        submitText.textContent = 'Lengkapi Form';
+    }
+}
+
 function submitForm() {
     const nama = document.getElementById('nama').value;
     const whatsapp = document.getElementById('whatsapp').value;
@@ -282,46 +482,13 @@ function submitForm() {
     const targetRank = document.getElementById('target-rank').value;
     const catatan = document.getElementById('catatan').value;
 
-    // Validasi nama
-    if (!nama.trim()) {
-        alert("Nama lengkap harus diisi!");
-        return;
-    }
-    
-    if (/\d/.test(nama)) {
-        alert("Nama tidak boleh mengandung angka!");
-        return;
-    }
-    
-    if (nama.trim().length < 2) {
-        alert("Nama terlalu pendek (minimal 2 karakter)!");
-        return;
-    }
-
-    // Validasi WhatsApp
-    if (!whatsapp.trim()) {
-        alert("Nomor WhatsApp harus diisi!");
-        return;
-    }
-    
-    const cleanWhatsApp = whatsapp.replace(/\D/g, '');
-    if (cleanWhatsApp.length < 12) {
-        alert(`Nomor WhatsApp terlalu pendek! Minimal 12 digit (saat ini ${cleanWhatsApp.length} digit)`);
-        return;
-    }
-    
-    if (!validateWhatsApp(whatsapp)) {
-        alert("Format nomor WhatsApp tidak valid! Gunakan format: 08xxxxxxxxxx atau 628xxxxxxxxxx");
-        return;
-    }
-
-    // Validasi game
-    if (!game) {
-        alert("Mohon pilih game terlebih dahulu!");
+    // Validasi final
+    if (!validateNama(nama) || !validateWhatsApp(whatsapp) || !validateGame(game)) {
         return;
     }
 
     // Format WhatsApp number untuk display
+    const cleanWhatsApp = whatsapp.replace(/\D/g, '');
     let formattedWhatsApp = cleanWhatsApp;
     if (cleanWhatsApp.startsWith('08')) {
         formattedWhatsApp = '62' + cleanWhatsApp.slice(1);
@@ -344,32 +511,31 @@ Mohon berikan informasi lengkap mengenai paket dan harga untuk permintaan di ata
     window.open(whatsappUrl, '_blank');
 }
 
-// Fungsi untuk toggle FAQ
 function toggleFAQ(index) {
     const content = document.getElementById(`faq-content-${index}`);
     const icon = document.getElementById(`faq-icon-${index}`);
     
-    if (content.style.display === 'none' || content.style.display === '') {
-        content.style.display = 'block';
-        icon.style.transform = 'rotate(180deg)';
+    if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        icon.classList.remove('rotate');
     } else {
-        content.style.display = 'none';
-        icon.style.transform = 'rotate(0deg)';
+        content.classList.add('show');
+        icon.classList.add('rotate');
     }
 }
 
-// Fungsi untuk render games
+// Fungsi render
 function renderGames() {
     const gamesGrid = document.getElementById('games-grid');
     gamesGrid.innerHTML = '';
 
     games.forEach((game, index) => {
         const tagsHTML = game.tags.map(tag => 
-            `<span class="bg-white/90 text-black text-xs px-2 py-1 rounded">${tag}</span>`
+            `<span class="badge">${tag}</span>`
         ).join(' ');
 
         const gameCard = `
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+            <div class="game-card">
                 <div class="relative">
                     <img src="${game.image}" alt="${game.title}" class="w-full h-48 object-cover">
                     <div class="absolute top-4 left-4 flex gap-2">
@@ -383,7 +549,7 @@ function renderGames() {
                     </div>
                     <p class="text-gray-600 mb-4">${game.description}</p>
                     <button onclick="orderGame('${game.title}', '${game.startingPrice}')" 
-                            class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors flex items-center justify-center gap-2">
+                            class="w-full btn-primary">
                         <i class="fab fa-whatsapp"></i>
                         Pesan Sekarang
                     </button>
@@ -394,7 +560,6 @@ function renderGames() {
     });
 }
 
-// Fungsi untuk render pricing
 function renderPricing() {
     const pricingGrid = document.getElementById('pricing-grid');
     pricingGrid.innerHTML = '';
@@ -408,12 +573,12 @@ function renderPricing() {
         ).join('');
 
         const popularBadge = pkg.popular ? 
-            `<span class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-3 py-1 rounded text-sm">
+            `<span class="absolute -top-3 left-1/2 transform -translate-x-1/2 badge-primary">
                 Terpopuler
             </span>` : '';
 
         const packageCard = `
-            <div class="bg-white rounded-lg shadow-lg p-6 relative ${pkg.popular ? 'border-2 border-purple-500' : ''}">
+            <div class="pricing-card ${pkg.popular ? 'popular' : ''} relative">
                 ${popularBadge}
                 
                 <div class="text-center mb-6">
@@ -429,8 +594,8 @@ function renderPricing() {
                     ${featuresHTML}
                 </ul>
                 
-                <button onclick='orderPackage(${JSON.stringify(pkg)})' 
-                        class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded transition-colors flex items-center justify-center gap-2">
+                <button onclick='orderPackage(${JSON.stringify(pkg).replace(/'/g, "&#39;")})' 
+                        class="w-full btn-primary">
                     <i class="fab fa-whatsapp"></i>
                     Pilih Paket
                 </button>
@@ -440,51 +605,51 @@ function renderPricing() {
     });
 }
 
-// Fungsi untuk render testimonials
 function renderTestimonials() {
     const testimonialsGrid = document.getElementById('testimonials-grid');
     testimonialsGrid.innerHTML = '';
 
     testimonials.forEach((testimonial, index) => {
         const starsHTML = Array(testimonial.rating).fill().map(() => 
-            '<i class="fas fa-star text-yellow-400"></i>'
+            '<i class="fas fa-star star"></i>'
         ).join('');
 
         const testimonialCard = `
-            <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-                <div class="flex items-center gap-4 mb-4">
-                    <img src="${testimonial.avatar}" alt="${testimonial.name}" 
-                         class="w-12 h-12 rounded-full object-cover">
-                    <div>
-                        <h4 class="font-semibold">${testimonial.name}</h4>
-                        <p class="text-sm text-gray-600">${testimonial.game}</p>
+            <div class="card">
+                <div class="card-content">
+                    <div class="flex items-center gap-4 mb-4">
+                        <img src="${testimonial.avatar}" alt="${testimonial.name}" 
+                             class="w-12 h-12 rounded-full object-cover">
+                        <div>
+                            <h4 class="font-semibold">${testimonial.name}</h4>
+                            <p class="text-sm text-gray-600">${testimonial.game}</p>
+                        </div>
                     </div>
+                    
+                    <div class="stars mb-4">
+                        ${starsHTML}
+                    </div>
+                    
+                    <p class="text-gray-700 italic">"${testimonial.review}"</p>
                 </div>
-                
-                <div class="flex gap-1 mb-4">
-                    ${starsHTML}
-                </div>
-                
-                <p class="text-gray-700 italic">"${testimonial.review}"</p>
             </div>
         `;
         testimonialsGrid.innerHTML += testimonialCard;
     });
 }
 
-// Fungsi untuk render FAQ
 function renderFAQ() {
     const faqContainer = document.getElementById('faq-container');
     faqContainer.innerHTML = '';
 
     faqs.forEach((faq, index) => {
         const faqItem = `
-            <div class="bg-white rounded-lg shadow border">
-                <div class="p-6 cursor-pointer flex justify-between items-center" onclick="toggleFAQ(${index})">
-                    <h3 class="text-left font-medium">${faq.question}</h3>
-                    <i id="faq-icon-${index}" class="fas fa-chevron-down transition-transform"></i>
+            <div class="faq-item">
+                <div class="faq-header" onclick="toggleFAQ(${index})">
+                    <h3 class="font-medium">${faq.question}</h3>
+                    <i id="faq-icon-${index}" class="fas fa-chevron-down faq-icon"></i>
                 </div>
-                <div id="faq-content-${index}" class="px-6 pb-4 text-gray-600" style="display: none;">
+                <div id="faq-content-${index}" class="faq-content">
                     ${faq.answer}
                 </div>
             </div>
@@ -493,20 +658,38 @@ function renderFAQ() {
     });
 }
 
-// Event listeners untuk validasi real-time
+// Event listeners
 document.addEventListener('DOMContentLoaded', function() {
+    // Render semua komponen
     renderGames();
     renderPricing();
     renderTestimonials();
     renderFAQ();
     
-    // Add event listeners untuk validasi real-time
+    // Setup navbar functionality
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    }
+    
+    if (backToTop) {
+        backToTop.addEventListener('click', scrollToTop);
+    }
+    
+    // Setup scroll listeners
+    window.addEventListener('scroll', function() {
+        handleNavbarScroll();
+        handleBackToTop();
+        updateActiveSection();
+    });
+    
+    // Setup form validation
     const namaInput = document.getElementById('nama');
     const whatsappInput = document.getElementById('whatsapp');
+    const gameSelect = document.getElementById('game');
     
     if (namaInput) {
         namaInput.addEventListener('input', function(e) {
-            // Remove numbers from nama input
+            // Remove numbers dari input nama
             this.value = this.value.replace(/[0-9]/g, '');
             validateNama(this.value);
         });
@@ -514,9 +697,102 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (whatsappInput) {
         whatsappInput.addEventListener('input', function(e) {
-            // Only allow numbers, spaces, hyphens, and plus
+            // Hanya allow angka, spasi, dash, dan plus
             this.value = this.value.replace(/[^0-9\s\-\+]/g, '');
             validateWhatsApp(this.value);
         });
+    }
+    
+    if (gameSelect) {
+        gameSelect.addEventListener('change', function(e) {
+            validateGame(this.value);
+        });
+    }
+    
+    // Setup smooth scroll untuk navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            scrollToSection(targetId);
+        });
+    });
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const isClickInsideNav = navbar.contains(event.target);
+        const isClickOnMenuBtn = mobileMenuBtn.contains(event.target);
+        
+        if (!isClickInsideNav && !isClickOnMenuBtn && mobileMenu.classList.contains('show')) {
+            toggleMobileMenu();
+        }
+    });
+    
+    // Setup intersection observer untuk animasi
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in-up');
+            }
+        });
+    }, observerOptions);
+    
+    // Observe semua card dan section
+    document.querySelectorAll('.card, .game-card, .pricing-card, section').forEach(el => {
+        observer.observe(el);
+    });
+    
+    // Initialize active section
+    updateActiveSection();
+});
+
+// Handle resize window
+window.addEventListener('resize', function() {
+    // Close mobile menu on resize to desktop
+    if (window.innerWidth >= 768 && mobileMenu.classList.contains('show')) {
+        toggleMobileMenu();
+    }
+});
+
+// Error handling untuk image loading
+document.addEventListener('error', function(e) {
+    if (e.target.tagName === 'IMG') {
+        console.log('Image failed to load:', e.target.src);
+        // Set fallback image
+        e.target.src = 'https://via.placeholder.com/300x200?text=Game+Image';
+    }
+}, true);
+
+// Global error handler
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+});
+
+// Performance monitoring
+window.addEventListener('load', function() {
+    console.log('Page fully loaded');
+    // Initialize active section after load
+    setTimeout(updateActiveSection, 100);
+});
+
+// Keyboard navigation support
+document.addEventListener('keydown', function(e) {
+    // ESC key to close mobile menu
+    if (e.key === 'Escape' && mobileMenu.classList.contains('show')) {
+        toggleMobileMenu();
+    }
+    
+    // Enter key to submit form
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn && !submitBtn.disabled && e.target.closest('#contact-form')) {
+            e.preventDefault();
+            submitForm();
+        }
     }
 });
