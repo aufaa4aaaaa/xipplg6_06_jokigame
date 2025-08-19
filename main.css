@@ -966,3 +966,10 @@ html {
 /* Opacity utilities */
 .opacity-0 { opacity: 0; }
 .opacity-100 { opacity: 1; }
+
+#home {
+    min-height: 100vh; /* tinggi penuh layar */
+    width: 100%;       /* lebar penuh */
+    display: flex;
+    align-items: center;
+}
